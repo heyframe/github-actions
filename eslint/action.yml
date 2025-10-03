@@ -1,0 +1,89 @@
+name: ESLint
+description: "Lint source"
+branding:
+  color: "blue"
+  icon: "download"
+
+inputs:
+  extensionName:
+    description: "Your extension name"
+    required: true
+  projectPath:
+    description: "Path to the js project to be linted. Checks the administartion app by default"
+    default: src/Resources/app/administration
+  npmLintCmd:
+    description: "The npm command to run"
+    default: lint
+  heyframeVersion:
+    description: |
+      With the default `.auto`, the workflow tries to find a heyframe version using the heyframe-version action.
+
+      For example, if the current ref is next-1234, it will try to find the ref next-1234 in heyframe/heyframe. If there's no matching ref, it will use heyframeVersionFallback
+    required: false
+    default: ".auto"
+  heyframeVersionFallback:
+    description: Fallback version in case there's no matching branch
+    required: false
+    default: trunk
+  heyframe-repository:
+    description: The heyframe repository to checkout
+    required: true
+    default: heyframe/heyframe
+  heyframe-github-token:
+    description: Token used for checking out the heyframe repository
+    required: true
+    default: ${{ github.token }}
+  forceInstallAdminDeps:
+    description: Install platform admin deps
+    default: ""
+    required: false
+  forceInstallStorefrontDeps:
+    description: Install platform storefront deps
+    default: ""
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: heyframe/github-actions/heyframe-version@main
+      with:
+        fallback: ${{ inputs.heyframeVersionFallback }}
+        repo: ${{ inputs.heyframe-repository }}
+        heyframe-github-token: ${{ inputs.heyframe-github-token }}
+      id: version
+      if: ${{ inputs.heyframeVersion == '.auto' || inputs.heyframeVersion == '' }}
+    - name: Clone HeyFrame
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.heyframe-repository || 'heyframe/heyframe' }}
+        ref: ${{ steps.version.outputs.heyframe-version || inputs.heyframeVersion }}
+        token: ${{ inputs.heyframe-github-token }}
+
+    - name: Clone Extension
+      uses: actions/checkout@v4
+      with:
+        path: custom/plugins/${{ inputs.extensionName }}
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+
+    - name: Install admin deps
+      shell: bash
+      if: ${{ inputs.forceInstallAdminDeps || contains(inputs.projectPath, 'administration') }}
+      run: npm ci --no-audit --no-fund --prefer-offline --prefix "src/Administration/Resources/app/administration"
+
+    - name: Install storefront deps
+      shell: bash
+      if: ${{ inputs.forceInstallStorefrontDeps || contains(inputs.projectPath, 'storefront') }}
+      run: npm ci --no-audit --no-fund --prefer-offline  --prefix "src/Storefront/Resources/app/storefront"
+
+    - name: Install Plugin Dependencies
+      shell: bash
+      run: npm install --no-audit --no-fund --prefer-offline --prefix "custom/plugins/${{ inputs.extensionName }}/${{ inputs.projectPath }}"
+
+    - name: Run Lint command
+      shell: bash
+      working-directory: custom/plugins/${{ inputs.extensionName }}/${{ inputs.projectPath }}
+      run: npm run ${{ inputs.npmLintCmd }}
