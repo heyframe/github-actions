@@ -1,0 +1,40 @@
+name: heyframe-version
+description: "Returns the HeyFrame version matching the current branch or a fallback"
+author: "Lyric Song"
+branding:
+    color: "blue"
+    icon: "download"
+
+inputs:
+    fallback:
+        description: Fallback version if no match is found
+        default: trunk
+        required: false
+    repo:
+        description: GitHub repository to check branches
+        default: heyframe/heyframe
+        required: false
+    ref:
+        description: Git reference to match (defaults to github.ref)
+        required: false
+        default: ""
+    base-ref:
+        description: Base ref for pull requests (defaults to github.base_ref)
+        required: false
+        default: ""
+    head-ref:
+        description: Head ref for pull requests (defaults to github.head_ref)
+        required: false
+        default: ""
+    github-token:
+        description: Token for accessing GitHub API
+        required: false
+        default: ""
+
+outputs:
+    heyframe-version:
+        description: The matching HeyFrame version or fallback
+
+runs:
+    using: "node20"
+    main: "dist/index.js"

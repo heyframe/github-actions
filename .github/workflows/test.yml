@@ -1,0 +1,86 @@
+name: Test actions
+on:
+  pull_request:
+
+jobs:
+    heyframe-version-fallback:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - id: version
+              uses: ./heyframe-version
+              with:
+                fallback: ""
+            - name: Check heyframe-version is never empty 
+              run: |
+                HEYFRAME_VERSION="${{ steps.version.outputs.heyframe-version }}"
+                echo "heyframe-version: '${HEYFRAME_VERSION}'"
+                if [[ -z "${HEYFRAME_VERSION}" ]]; then
+                    echo 'heyframe-version should not be empty'
+                    exit 1
+                fi
+    heyframe-version:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                test-case:
+                    - ref: this-branch-does-not-exist
+                      base-ref: "6.7.3.99"
+                      expected-version: "6.7.3.x"
+                    - ref: this-branch-does-not-exist
+                      base-ref: "6.6.99.99"
+                      expected-version: "6.6.x"
+                    - ref: trunk
+                      base-ref: "6.7.99.99"
+                      expected-version: "trunk"
+                    - ref: does-not-exist
+                      head-ref: trunk
+                      base-ref: "6.7.99.99"
+                      expected-version: "trunk"
+                    - ref: 6.7.2.99
+                      base-ref: " "
+                      expected-version: "6.7.2.x"
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Test heyframe-version
+              id: version
+              uses: ./heyframe-version
+              with:
+                ref: ${{ matrix.test-case.ref }}
+                base-ref: ${{ matrix.test-case.base-ref }}
+                head-ref: ${{ matrix.test-case.head-ref || matrix.test-case.ref }}
+                repo: heyframe/heyframe
+                fallback: 'not-found'
+            - name: Check heyframe-version matches expected version
+              run: |
+                HEYFRAME_VERSION="${{ steps.version.outputs.heyframe-version }}"
+                EXPECTED_VERSION="${{ matrix.test-case.expected-version }}"
+                echo "heyframe-version: '${HEYFRAME_VERSION}'"
+                echo "expected-version: '${EXPECTED_VERSION}'"
+                if [[ "${HEYFRAME_VERSION}" != "${EXPECTED_VERSION}" ]]; then
+                    echo "heyframe-version should be '${EXPECTED_VERSION}' but got '${HEYFRAME_VERSION}'"
+                    exit 1
+                fi
+            - name: Test heyframe-version with refs/heads/
+              id: version-heads
+              uses: ./heyframe-version
+              if: ${{ matrix.test-case.base-ref != ' ' }}
+              with:
+                ref: refs/heads/${{ matrix.test-case.ref }}
+                base-ref: refs/heads/${{ matrix.test-case.base-ref }}
+                head-ref: refs/heads/${{ matrix.test-case.head-ref || matrix.test-case.ref }}
+                repo: heyframe/heyframe
+                fallback: 'not-found'
+            - name: Check heyframe-version matches expected version
+              if: ${{ matrix.test-case.base-ref != ' ' }}
+              run: |
+                HEYFRAME_VERSION="${{ steps.version-heads.outputs.heyframe-version }}"
+                EXPECTED_VERSION="${{ matrix.test-case.expected-version }}"
+                echo "heyframe-version: '${HEYFRAME_VERSION}'"
+                echo "expected-version: '${EXPECTED_VERSION}'"
+                if [[ "${HEYFRAME_VERSION}" != "${EXPECTED_VERSION}" ]]; then
+                    echo "heyframe-version should be '${EXPECTED_VERSION}' but got '${HEYFRAME_VERSION}'"
+                    exit 1
+                fi
