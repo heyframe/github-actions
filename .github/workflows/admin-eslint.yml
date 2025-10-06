@@ -1,0 +1,57 @@
+name: ESLint
+on:
+  workflow_call:
+    inputs:
+        extensionName:
+          required: true
+          type: string
+        heyframeVersion:
+          required: false
+          type: string
+          default: '.auto'
+        heyframeVersionFallback:
+          required: false
+          type: string
+          default: trunk
+        heyframe-repository:
+          type: string
+          default: heyframe/heyframe
+
+jobs:
+  run:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: heyframe/github-actions/heyframe-version@main
+        with:
+          fallback: ${{ inputs.heyframeVersionFallback }}
+          repo: ${{ inputs.heyframe-repository }}
+        id: version
+        if: ${{ inputs.heyframeVersion == '.auto' || inputs.heyframeVersion == '' }}
+      - name: Clone HeyFrame
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.heyframe-repository || 'heyframe/heyframe' }}
+          ref: ${{ steps.version.outputs.heyframe-version || inputs.heyframeVersion }}
+      - name: Clone Extension
+        uses: actions/checkout@v4
+        with:
+          path: custom/plugins/${{ inputs.extensionName }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install admin deps
+        shell: bash
+        working-directory: src/Administration/Resources/app/administration
+        run: npm ci --no-audit --no-fund --prefer-offline
+
+      - name: Install Plugin Dependencies
+        working-directory: custom/plugins/${{ inputs.extensionName }}/src/Resources/app/administration
+        run: npm install --no-audit --no-fund --prefer-offline
+
+      - name: Run ESLint
+        working-directory: custom/plugins/${{ inputs.extensionName }}/src/Resources/app/administration
+        run: npm run lint
