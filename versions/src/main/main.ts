@@ -11,7 +11,7 @@ const curMajor = CUR_MAJOR.startsWith('v') ? CUR_MAJOR : `v${CUR_MAJOR}`;
 
 function getTags(): string[] {
     const out = execSync(
-        'git -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort="version:refname" --tags https://github.com/shopware/shopware',
+        'git -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort="version:refname" --tags https://github.com/heyframe/heyframe',
         { encoding: 'utf-8' }
     );
     return out
@@ -22,7 +22,7 @@ function getTags(): string[] {
 
 function getTagsWithoutRC(): string[] {
     const out = execSync(
-        'git -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort="version:refname" --tags https://github.com/shopware/shopware',
+        'git -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort="version:refname" --tags https://github.com/heyframe/heyframe',
         { encoding: 'utf-8' }
     );
     return out
