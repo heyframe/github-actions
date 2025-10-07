@@ -9,8 +9,8 @@ inputs:
         description: Current major prefix like v6.7.
         default: v6.7.
     lts-major:
-        description: LTS major prefix like v6.6.
-        default: v6.6.
+        description: LTS major prefix like v6.7.
+        default: v6.7.
 
 outputs:
     first-version:
