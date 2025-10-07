@@ -13,8 +13,7 @@
     "@actions/tool-cache": "^2.0.2",
     "@octokit/action": "^8.0.2",
     "@octokit/request-error": "^7.0.0",
-    "@types/node": "^24.2.1",
-    "semver": "^7.7.2"
+    "@types/node": "^24.2.1"
   },
   "devDependencies": {
     "@types/semver": "^7.7.1",
