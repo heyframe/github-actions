@@ -16,7 +16,7 @@ jobs:
     name: Build and Validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install heyframe-cli
         uses: heyframe/heyframe-cli-action@v1
       - name: Build
